@@ -1,3 +1,11 @@
+"""
+Ai Pong Trainer using NEAT learning algorithm.
+
+@author: John Trager
+
+2020
+"""
+
 import pygame
 from random import randint
 import neat
@@ -5,7 +13,6 @@ import os
 import pickle
 import datetime
 import gzip
-import visualize
 
 WIDTH = 480
 HEIGHT = 360
@@ -24,7 +31,7 @@ class Paddle:
         Initialize the object
         :param x: starting x pos (int)
         :param y: starting y pos (int)
-        :return: None
+        :return: Void
         """
         self.x = x
         self.y = y
@@ -37,25 +44,28 @@ class Paddle:
     def moveUP(self):
         """
         make the object go up
-        :return: None
+        :return: Void
         """
         self.vel = -5
     
     def moveDOWN(self):
         """
         make the object go down
-        :return: None
+        :return: Void
         """
         self.vel = 5
     
     def moveSTOP(self):
         """
         makes the object stop moving
-        :return: None
+        :return: Void
         """
         self.vel = 0
 
     def move(self):
+        """
+        moves paddle if not colliding with top or bottom of screen
+        """
         if self.rect.top <= 0 and self.vel < 0:
             self.vel = 0
         elif self.rect.bottom >= HEIGHT and self.vel > 0:
@@ -64,12 +74,21 @@ class Paddle:
         self.rect = self.rect.move([0,self.vel])
 
     def draw(self, screen):
+        """
+        draws the pygram rects ontp the screen
+        """
         pygame.draw.rect(screen, self.color, self.rect)
     
     def getY(self):
+        """
+        returns the Y coordinate of the paddle
+        """
         return self.rect.y
     
     def getX(self):
+        """
+        returns the X coordinate of the paddle
+        """
         return self.rect.x
 
 class Ball:
@@ -79,7 +98,7 @@ class Ball:
         Initialize the object
         :param x: starting x pos (int)
         :param y: starting y pos (int)
-        :return: None
+        :return: Void
         """
         self.x = x
         self.y = y
@@ -91,54 +110,49 @@ class Ball:
     def changeVelY(self):
         """
         changes the objects y direction
-        :return: None
+        :return: Void
         """
         self.vel[1] = -self.vel[1]
     
     def changeVelX(self):
         """
         changes the objects x direction
-        :return: None
+        :return: Void
         """
         self.vel[0] = -self.vel[0]
 
     def move(self):
+        """
+        moves ball object (with collision)
+        """
         #if ball hits the bottom or top of screen change y direction
         if self.rect.top <= 0 or self.rect.bottom >= HEIGHT:
             self.changeVelY()
         self.rect = self.rect.move([self.vel[0],self.vel[1]])
 
     def draw(self, screen):
+        """
+        Draws the rect object onto screen
+        """
         pygame.draw.rect(screen, self.color, self.rect)
 
     def getX(self):
+        """
+        returns Ball object X coordinate
+        """
         return self.rect.x
 
     def getY(self):
+        """
+        returns Ball object Y coordinate
+        """
         return self.rect.y
     
     def collide(self, paddle):
+        """
+        Returns true if any portion of either rectangle overlap (except the top+bottom or left+right edges). 
+        """
         return self.rect.colliderect(paddle)
-
-def drawWindow(screen, lPaddles, rPaddle, balls):
-    """
-    draws the windows for the main game loop
-    :param screen: pygame window surface
-    :param lPaddles: a list of Left Paddles
-    :param rPaddle: the Right Paddle
-    :param balls: a list of balls
-    :return: None
-    """
-    screen.fill((0,0,0))
-
-    for ball in balls:
-        ball.draw(screen)
-
-    for paddle in lPaddles:
-        paddle.draw(screen)
-
-    rPaddle.draw(screen)
-    pygame.display.flip()
 
 def drawWindow(screen, paddles, paddlesR, balls):
     """
@@ -148,14 +162,18 @@ def drawWindow(screen, paddles, paddlesR, balls):
     :param balls: a list of balls
     :return: None
     """
+    #draws black screen
     screen.fill((0,0,0))
 
+    #draws balls
     for ball in balls:
         ball.draw(screen)
 
+    #draws left side paddles
     for paddle in paddles:
         paddle.draw(screen)
 
+    #draws right side paddles
     for paddle in paddlesR:
         paddle.draw(screen)
 
@@ -166,10 +184,17 @@ def drawWindow(screen, paddles, paddlesR, balls):
     pygame.display.flip()
 
 def save_object(obj, filename):
+    """
+    saves model into .pkl file
+    """
     with gzip.open(filename, 'w', compresslevel=5) as f:
         pickle.dump(obj, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 def load_object(filename):
+    """
+    reads model from .pkl file and returns object
+    TODO: as of 7-14-20 this function has had some problems that need to be sorted
+    """
     with gzip.open(filename) as f:
         obj = pickle.load(f)
         return obj
@@ -180,54 +205,11 @@ def randomSign():
         return -1
     else: return 1
 
-def main(screen, lPaddles, rPaddle, balls):
-
-    clock = pygame.time.Clock()
-
-    run = True
-    while run and len(lPaddles) > 0:
-        clock.tick(30)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
-                pygame.quit()
-                quit()
-                break
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_w: lPaddles[0].moveUP()
-                if event.key == pygame.K_s: lPaddles[0].moveDOWN()
-            else:
-                lPaddles[0].moveSTOP()
-
-            if event.type == pygame.KEYDOWN:
-                #right move
-                if event.key == pygame.K_UP: rPaddle.moveUP()
-                if event.key == pygame.K_DOWN: rPaddle.moveDOWN()        
-            else:
-                rPaddle.moveSTOP()
-        
-
-        rPaddle.move()
-
-        
-        for ball in balls:
-            if ball.collide(lPaddles[balls.index(ball)]):
-                ball.changeVelX()
-                lPaddles[balls.index(ball)].fitness += 5
-            ball.move()
-            if ball.getX() < 0:
-                #print(balls.index(ball))
-                lPaddles[balls.index(ball)].fitness = 1
-                lPaddles.pop(balls.index(ball))
-                balls.pop(balls.index(ball))
-        
-        for paddle in lPaddles:
-            paddle.move()
-            paddle.fitness += 1
-
-        drawWindow(screen, lPaddles, rPaddle, balls)
-
 def eval_genomes(genomes, config):
+    """
+    evolves the different genomes using NEAT algorithm
+    handles collisions and movement of paddles and balls
+    """
     global gen
     global winON
     gen += 1
@@ -263,11 +245,12 @@ def eval_genomes(genomes, config):
                 break
         #left paddle
         for x, paddle in enumerate(paddles):
+            #given fitness for being alive
             ge[x].fitness += 0.05
             paddle.move()
 
             #send the inputs to the NNs and receive output and decide if move up, down, or not move
-            #TODO: test out differnt inputs to the ANN, try abs(paddle.y-ball.y) instead of ball.y or other variantions
+            #TODO: test out different inputs to the ANN, try abs(paddle.y-ball.y) instead of ball.y or other variantions
             outputs = nets[paddles.index(paddle)].activate((paddle.getY(),
                                                             abs(paddle.getX() - balls[paddles.index(paddle)].rect.x),
                                                             balls[paddles.index(paddle)].rect.y))
@@ -283,6 +266,7 @@ def eval_genomes(genomes, config):
                 paddle.moveSTOP()
         #right paddle
         for x, paddle in enumerate(paddlesR):
+            #given fitness for being alive
             ge[x].fitness += 0.05
             paddle.move()
 
@@ -300,7 +284,7 @@ def eval_genomes(genomes, config):
             else:
                 paddle.moveSTOP()
         
-        
+        #gives fitness to evolution if its corresponding ball
         for ball in balls:
             if ball.collide(paddles[balls.index(ball)]):
                 ball.changeVelX()
@@ -319,9 +303,11 @@ def eval_genomes(genomes, config):
                 paddles.pop(balls.index(ball))
                 paddlesR.pop(balls.index(ball))
                 balls.pop(balls.index(ball))
+
         #render / update screen
         if winON: drawWindow(screen, paddles, paddlesR, balls)
 
+        #breaks the evolution if the score reaches 500
         if score > 500:
             break
 
@@ -329,7 +315,7 @@ def run(config_file):
     """
     runs the NEAT algorithm to train a neural network to play pong.
     :param config_file: location of config file
-    :return: None
+    :return: Void
     """
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
@@ -354,10 +340,6 @@ def run(config_file):
     # show final stats
     print('\nBest genome:\n{!s}'.format(winner))
 
-    #visualize.draw_net(config, winner, True, )
-    #visualize.plot_stats(stats, ylog=False, view=True)
-    #visualize.plot_species(stats, view=True)
-
 
 if __name__ == '__main__':
     # Determine path to configuration file. This path manipulation is
@@ -366,12 +348,4 @@ if __name__ == '__main__':
     local_dir = os.path.dirname(__file__)
     config_path = os.path.join(local_dir, 'config-feedforward.txt')
     run(config_path)
-
-    #lpad = Paddle(0,200)
-    #l2pad = Paddle(0,100)
-    #rpad = Paddle(WIDTH-5,200)
-    #ball1 = Ball(100, 300)
-    #ball2 = Ball(240, 200)
-    #game1 = Game()
-    #main(screen,[lpad,l2pad],rpad,[ball1,ball2])
 
