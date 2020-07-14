@@ -10,8 +10,8 @@ Neat pong is a program that teaches AIs how to play pong using Neural Evolution 
 ## How it works
 
 ## Acknowledgements
-I am using the neat-python module and would like to give credit where it is due. You can find their module and repository [here](https://github.com/CodeReclaimers/neat-python)
+I am using the neat-python module. You can find their module and repository [here](https://github.com/CodeReclaimers/neat-python) t
 
 Additional reading about neat can be find [here](http://www.cs.utexas.edu/~ai-lab/pubs/stanley.gecco02_1.pdf) from Kenneth O. Stanley's paper.
 
-
+[![Demo CountPages alpha](https://share.gifyoutube.com/KzB6Gb.gif)](https://www.youtube.com/watch?v=ek1j272iAmc)
