@@ -17,7 +17,7 @@ When all the models are training at once it looks like such:
 A little chaotic!
 
 Here it is in action:
-![Environment in action](media/action.gif)
+![Environment in action](https://media.giphy.com/media/lrVnvb9xhYqDl7QFiv/giphy.gif)
 
 ## Acknowledgements
 I am using the neat-python module. You can find their module and repository [here](https://github.com/CodeReclaimers/neat-python)
