@@ -17,6 +17,7 @@ When all the models are training at once it looks like such:
 A little chaotic!
 
 Here it is in action:
+
 ![Environment in action](https://media.giphy.com/media/lrVnvb9xhYqDl7QFiv/giphy.gif)
 
 ## Acknowledgements
