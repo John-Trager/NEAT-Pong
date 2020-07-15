@@ -16,6 +16,8 @@ When all the models are training at once it looks like such:
 ![150 Models Training](media/150_population.png)
 A little chaotic!
 
+Here it is in action:
+![Environment in action](media/action.gif)
 
 ## Acknowledgements
 I am using the neat-python module. You can find their module and repository [here](https://github.com/CodeReclaimers/neat-python)
