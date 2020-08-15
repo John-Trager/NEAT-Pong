@@ -7,6 +7,8 @@ Neat pong is a program that teaches AIs how to play pong using Neural Evolution 
 3. run "pip install -r requirements.txt" or "pip3 install -r requirements.txt" if on mac in your terminal or command prompt
 4. run the file like any other python script "python3 pong.py" and enjoy!
 
+If at any point you run into an issue be that running the code or you have a question about how it works feel free to reach out and message me!
+
 ## How it works
 The algorithm has multiple models separated into different "species" in a population. The population is then put into pong and rated on how well they do each generation. The models are given points or fitness every time they hit the ball and every frame they are alive. The model can die if it misses the pong ball and no longer will receive fitness for that generation. The best performing models of each specie will be breaded and create the models for the next generation. The environment will keep running generations until one of the models hits a threshold of fitness at which point it will end and return the model.
 
