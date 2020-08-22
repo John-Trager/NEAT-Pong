@@ -6,13 +6,14 @@ Ai Pong Trainer using NEAT learning algorithm.
 2020
 """
 import gzip
-import pygame
-from random import randint
-import neat
+import sys
 import os
 import pickle
-import datetime
-import sys
+from random import randint
+import pygame
+from pygame import QUIT
+import neat
+
 
 WIDTH = 480
 HEIGHT = 360
@@ -50,14 +51,14 @@ class Paddle:
         :return: Void
         """
         self.vel = -5
-        
+
     def move_down(self):
         """
         make the object go down
         :return: Void
         """
         self.vel = 5
-    
+
     def move_stop(self):
         """
         makes the object stop moving
@@ -81,13 +82,13 @@ class Paddle:
         draws the pygram rects ontp the screen
         """
         pygame.draw.rect(screen, self.color, self.rect)
-    
+
     def get_y(self):
         """
         returns the Y coordinate of the paddle
         """
         return self.rect.y
-    
+
     def get_x(self):
         """
         returns the X coordinate of the paddle
@@ -119,7 +120,7 @@ class Ball:
         :return: Void
         """
         self.vel[1] = -self.vel[1]
-    
+
     def change_vel_x(self):
         """
         changes the objects x direction
@@ -153,11 +154,11 @@ class Ball:
         returns Ball object Y coordinate
         """
         return self.rect.y
-    
+
     def collide(self, paddle):
         """
         Returns true if any portion of either rectangle overlap
-        (except the top+bottom or left+right edges). 
+        (except the top+bottom or left+right edges).
         """
         return self.rect.colliderect(paddle)
 
@@ -211,7 +212,7 @@ def random_sign():
     returns a random sign either -1 or +1
     """
     i = randint(0,1)
-    if i == 0: 
+    if i == 0:
         return -1
     return 1
 
@@ -241,16 +242,16 @@ def eval_genomes(genomes, config):
         balls.append(Ball(randint(100,255),randint(100,255),tmp_color))
         g.fitness = 0
         ge.append(g)
-    
+
     clock = pygame.time.Clock()
 
     run = True
     while run and len(paddles) > 0:
         if WIN_ON: clock.tick(30)
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if event.type == QUIT:
                 run = False
-                pygame.quit()
+                quit()
                 sys.exit()
                 break
         #left paddle
@@ -261,7 +262,7 @@ def eval_genomes(genomes, config):
 
             # send the inputs to the NNs and receive output and
             # decide if move up, down, or not move
-            # TODO: test out different inputs to the ANN, 
+            # todo: test out different inputs to the ANN,
             # try abs(paddle.y-ball.y) instead of ball.y or other variantions
             outputs = nets[paddles.index(paddle)].activate((paddle.get_y(),
                                     abs(paddle.get_x() - balls[paddles.index(paddle)].rect.x),
@@ -283,9 +284,9 @@ def eval_genomes(genomes, config):
             paddle.move()
 
             outputs = nets[paddles_r.index(paddle)].activate((paddle.get_y(),
-                                                            abs(paddle.get_x() - balls[paddles_r.index(paddle)].rect.x),
-                                                            balls[paddles_r.index(paddle)].rect.y))
-            
+                            abs(paddle.get_x() - balls[paddles_r.index(paddle)].rect.x),
+                            balls[paddles_r.index(paddle)].rect.y))
+
             if outputs[0] > outputs[1]:
                 if outputs[0] > 0.5:
                     paddle.move_up()
@@ -295,7 +296,7 @@ def eval_genomes(genomes, config):
                 paddle.move_down()
             else:
                 paddle.move_stop()
-        
+
         #gives fitness to evolution if its corresponding ball
         for ball in balls:
             if ball.collide(paddles[balls.index(ball)]):
@@ -317,7 +318,8 @@ def eval_genomes(genomes, config):
                 balls.pop(balls.index(ball))
 
         #render / update screen
-        if WIN_ON: draw_window(screen, paddles, paddles_r, balls)
+        if WIN_ON:
+            draw_window(screen, paddles, paddles_r, balls)
 
         #breaks the evolution if the score reaches 500
         if score > 500:
@@ -340,7 +342,7 @@ def run(config_file):
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
-    checkpoint = neat.Checkpointer(5, "test")
+    #checkpoint = nexat.Checkpointer(5, "test")
     #p.add_reporter(neat.Checkpointer(5))
 
     # Run for up to 50 generations.
