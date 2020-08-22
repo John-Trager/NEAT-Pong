@@ -5,19 +5,19 @@ Ai Pong Trainer using NEAT learning algorithm.
 
 2020
 """
-
+import gzip
 import pygame
 from random import randint
 import neat
 import os
 import pickle
 import datetime
-import gzip
+import sys
 
 WIDTH = 480
 HEIGHT = 360
-gen = 0
-winON = True
+GEN = 0
+WIN_ON = True
 
 pygame.init()
 STAT_FONT = pygame.font.SysFont("comicsans", 40)
@@ -25,6 +25,9 @@ screen = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Genetic Pong")
 
 class Paddle:
+    """
+    Paddle Object
+    """
 
     def __init__(self, x, y, color):
         """
@@ -41,21 +44,21 @@ class Paddle:
         self.height = HEIGHT/10
         self.rect = pygame.Rect(self.x,self.y,self.width,self.height)
 
-    def moveUP(self):
+    def move_up(self):
         """
         make the object go up
         :return: Void
         """
         self.vel = -5
-    
-    def moveDOWN(self):
+        
+    def move_down(self):
         """
         make the object go down
         :return: Void
         """
         self.vel = 5
     
-    def moveSTOP(self):
+    def move_stop(self):
         """
         makes the object stop moving
         :return: Void
@@ -79,19 +82,22 @@ class Paddle:
         """
         pygame.draw.rect(screen, self.color, self.rect)
     
-    def getY(self):
+    def get_y(self):
         """
         returns the Y coordinate of the paddle
         """
         return self.rect.y
     
-    def getX(self):
+    def get_x(self):
         """
         returns the X coordinate of the paddle
         """
         return self.rect.x
 
 class Ball:
+    """
+    Ball Object
+    """
 
     def __init__(self, x, y, color):
         """
@@ -102,19 +108,19 @@ class Ball:
         """
         self.x = x
         self.y = y
-        self.vel = [randomSign()*4,randomSign()*4]
+        self.vel = [random_sign()*4,random_sign()*4]
         self.color = color
         self.width = 10
         self.rect = pygame.Rect(self.x,self.y,self.width,self.width)
 
-    def changeVelY(self):
+    def change_vel_y(self):
         """
         changes the objects y direction
         :return: Void
         """
         self.vel[1] = -self.vel[1]
     
-    def changeVelX(self):
+    def change_vel_x(self):
         """
         changes the objects x direction
         :return: Void
@@ -127,7 +133,7 @@ class Ball:
         """
         #if ball hits the bottom or top of screen change y direction
         if self.rect.top <= 0 or self.rect.bottom >= HEIGHT:
-            self.changeVelY()
+            self.change_vel_y()
         self.rect = self.rect.move([self.vel[0],self.vel[1]])
 
     def draw(self, screen):
@@ -136,13 +142,13 @@ class Ball:
         """
         pygame.draw.rect(screen, self.color, self.rect)
 
-    def getX(self):
+    def get_x(self):
         """
         returns Ball object X coordinate
         """
         return self.rect.x
 
-    def getY(self):
+    def get_y(self):
         """
         returns Ball object Y coordinate
         """
@@ -150,11 +156,12 @@ class Ball:
     
     def collide(self, paddle):
         """
-        Returns true if any portion of either rectangle overlap (except the top+bottom or left+right edges). 
+        Returns true if any portion of either rectangle overlap
+        (except the top+bottom or left+right edges). 
         """
         return self.rect.colliderect(paddle)
 
-def drawWindow(screen, paddles, paddlesR, balls):
+def draw_window(screen, paddles, paddles_r, balls):
     """
     draws the windows for the main game loop
     :param screen: pygame window surface
@@ -174,11 +181,11 @@ def drawWindow(screen, paddles, paddlesR, balls):
         paddle.draw(screen)
 
     #draws right side paddles
-    for paddle in paddlesR:
+    for paddle in paddles_r:
         paddle.draw(screen)
 
     # generations
-    score_label = STAT_FONT.render("Gens: " + str(gen-1),1,(255,255,255))
+    score_label = STAT_FONT.render("Gens: " + str(GEN-1),1,(255,255,255))
     screen.blit(score_label, (10, 10))
 
     pygame.display.flip()
@@ -199,24 +206,27 @@ def load_object(filename):
         obj = pickle.load(f)
         return obj
 
-def randomSign():
+def random_sign():
+    """
+    returns a random sign either -1 or +1
+    """
     i = randint(0,1)
     if i == 0: 
         return -1
-    else: return 1
+    return 1
 
 def eval_genomes(genomes, config):
     """
     evolves the different genomes using NEAT algorithm
     handles collisions and movement of paddles and balls
     """
-    global gen
-    global winON
-    gen += 1
+    global GEN
+    global WIN_ON
+    GEN += 1
     score = 0
 
     paddles = []
-    paddlesR = []
+    paddles_r = []
     balls = []
     nets = [] #holds all the differnet NN
     ge = [] # keeps track of genomes
@@ -227,7 +237,7 @@ def eval_genomes(genomes, config):
         net = neat.nn.FeedForwardNetwork.create(g,config)
         nets.append(net)
         paddles.append(Paddle(0,240,tmp_color))
-        paddlesR.append(Paddle(WIDTH-5,240,tmp_color))
+        paddles_r.append(Paddle(WIDTH-5,240,tmp_color))
         balls.append(Ball(randint(100,255),randint(100,255),tmp_color))
         g.fitness = 0
         ge.append(g)
@@ -236,12 +246,12 @@ def eval_genomes(genomes, config):
 
     run = True
     while run and len(paddles) > 0:
-        if winON: clock.tick(30)
+        if WIN_ON: clock.tick(30)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
                 pygame.quit()
-                quit()
+                sys.exit()
                 break
         #left paddle
         for x, paddle in enumerate(paddles):
@@ -249,63 +259,65 @@ def eval_genomes(genomes, config):
             ge[x].fitness += 0.05
             paddle.move()
 
-            #send the inputs to the NNs and receive output and decide if move up, down, or not move
-            #TODO: test out different inputs to the ANN, try abs(paddle.y-ball.y) instead of ball.y or other variantions
-            outputs = nets[paddles.index(paddle)].activate((paddle.getY(),
-                                                            abs(paddle.getX() - balls[paddles.index(paddle)].rect.x),
-                                                            balls[paddles.index(paddle)].rect.y))
+            # send the inputs to the NNs and receive output and
+            # decide if move up, down, or not move
+            # TODO: test out different inputs to the ANN, 
+            # try abs(paddle.y-ball.y) instead of ball.y or other variantions
+            outputs = nets[paddles.index(paddle)].activate((paddle.get_y(),
+                                    abs(paddle.get_x() - balls[paddles.index(paddle)].rect.x),
+                                    balls[paddles.index(paddle)].rect.y))
 
             if outputs[0] > outputs[1]:
                 if outputs[0] > 0.5:
-                    paddle.moveUP()
+                    paddle.move_up()
                 else:
-                    paddle.moveSTOP()
+                    paddle.move_stop()
             elif outputs[1] > 0.5:
-                paddle.moveDOWN()
+                paddle.move_down()
             else:
-                paddle.moveSTOP()
+                paddle.move_stop()
         #right paddle
-        for x, paddle in enumerate(paddlesR):
+        for x, paddle in enumerate(paddles_r):
             #given fitness for being alive
             ge[x].fitness += 0.05
             paddle.move()
 
-            outputs = nets[paddlesR.index(paddle)].activate((paddle.getY(),
-                                                            abs(paddle.getX() - balls[paddlesR.index(paddle)].rect.x),
-                                                            balls[paddlesR.index(paddle)].rect.y))
+            outputs = nets[paddles_r.index(paddle)].activate((paddle.get_y(),
+                                                            abs(paddle.get_x() - balls[paddles_r.index(paddle)].rect.x),
+                                                            balls[paddles_r.index(paddle)].rect.y))
             
             if outputs[0] > outputs[1]:
                 if outputs[0] > 0.5:
-                    paddle.moveUP()
+                    paddle.move_up()
                 else:
-                    paddle.moveSTOP()
+                    paddle.move_stop()
             elif outputs[1] > 0.5:
-                paddle.moveDOWN()
+                paddle.move_down()
             else:
-                paddle.moveSTOP()
+                paddle.move_stop()
         
         #gives fitness to evolution if its corresponding ball
         for ball in balls:
             if ball.collide(paddles[balls.index(ball)]):
-                ball.changeVelX()
+                ball.change_vel_x()
                 ge[balls.index(ball)].fitness += 5
                 score += 1
-            if ball.collide(paddlesR[balls.index(ball)]):
-                ball.changeVelX()
+            if ball.collide(paddles_r[balls.index(ball)]):
+                ball.change_vel_x()
                 ge[balls.index(ball)].fitness += 5
                 score += 1
             ball.move()
-            if ball.getX() < 0 or ball.getX() > WIDTH:
+            if ball.get_x() < 0 or ball.get_x() > WIDTH:
                 #check if paddle misses ball
                 ge[balls.index(ball)].fitness -= 2
                 nets.pop(balls.index(ball))
                 ge.pop(balls.index(ball))
                 paddles.pop(balls.index(ball))
-                paddlesR.pop(balls.index(ball))
+                paddles_r.pop(balls.index(ball))
                 balls.pop(balls.index(ball))
 
         #render / update screen
-        if winON: drawWindow(screen, paddles, paddlesR, balls)
+        if WIN_ON: draw_window(screen, paddles, paddles_r, balls)
 
         #breaks the evolution if the score reaches 500
         if score > 500:
