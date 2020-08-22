@@ -10,8 +10,8 @@ import sys
 import os
 import pickle
 from random import randint
+from pygame import QUIT, init
 import pygame
-from pygame import QUIT
 import neat
 
 
@@ -20,7 +20,7 @@ HEIGHT = 360
 GEN = 0
 WIN_ON = True
 
-pygame.init()
+init()
 STAT_FONT = pygame.font.SysFont("comicsans", 40)
 screen = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Genetic Pong")
@@ -30,20 +30,20 @@ class Paddle:
     Paddle Object
     """
 
-    def __init__(self, x, y, color):
+    def __init__(self, x_c, y_c, color):
         """
         Initialize the object
-        :param x: starting x pos (int)
-        :param y: starting y pos (int)
+        :param x_c: starting x_c pos (int)
+        :param y_c: starting y_c pos (int)
         :return: Void
         """
-        self.x = x
-        self.y = y
+        self.x_c = x_c
+        self.y_c = y_c
         self.vel = 0
         self.color = color
         self.width = 5
         self.height = HEIGHT/10
-        self.rect = pygame.Rect(self.x,self.y,self.width,self.height)
+        self.rect = pygame.Rect(self.x_c,self.y_c,self.width,self.height)
 
     def move_up(self):
         """
@@ -100,30 +100,30 @@ class Ball:
     Ball Object
     """
 
-    def __init__(self, x, y, color):
+    def __init__(self, x_c, y_c, color):
         """
         Initialize the object
-        :param x: starting x pos (int)
-        :param y: starting y pos (int)
+        :param x_c: starting x_c pos (int)
+        :param y_c: starting y_c pos (int)
         :return: Void
         """
-        self.x = x
-        self.y = y
+        self.x_c = x_c
+        self.y_c = y_c
         self.vel = [random_sign()*4,random_sign()*4]
         self.color = color
         self.width = 10
-        self.rect = pygame.Rect(self.x,self.y,self.width,self.width)
+        self.rect = pygame.Rect(self.x_c,self.y_c,self.width,self.width)
 
     def change_vel_y(self):
         """
-        changes the objects y direction
+        changes the objects y_c direction
         :return: Void
         """
         self.vel[1] = -self.vel[1]
 
     def change_vel_x(self):
         """
-        changes the objects x direction
+        changes the objects x_c direction
         :return: Void
         """
         self.vel[0] = -self.vel[0]
@@ -132,7 +132,7 @@ class Ball:
         """
         moves ball object (with collision)
         """
-        #if ball hits the bottom or top of screen change y direction
+        #if ball hits the bottom or top of screen change y_c direction
         if self.rect.top <= 0 or self.rect.bottom >= HEIGHT:
             self.change_vel_y()
         self.rect = self.rect.move([self.vel[0],self.vel[1]])
@@ -251,19 +251,18 @@ def eval_genomes(genomes, config):
         for event in pygame.event.get():
             if event.type == QUIT:
                 run = False
-                quit()
                 sys.exit()
                 break
         #left paddle
-        for x, paddle in enumerate(paddles):
+        for x_c, paddle in enumerate(paddles):
             #given fitness for being alive
-            ge[x].fitness += 0.05
+            ge[x_c].fitness += 0.05
             paddle.move()
 
             # send the inputs to the NNs and receive output and
             # decide if move up, down, or not move
             # todo: test out different inputs to the ANN,
-            # try abs(paddle.y-ball.y) instead of ball.y or other variantions
+            # try abs(paddle.y_c-ball.y_c) instead of ball.y_c or other variantions
             outputs = nets[paddles.index(paddle)].activate((paddle.get_y(),
                                     abs(paddle.get_x() - balls[paddles.index(paddle)].rect.x),
                                     balls[paddles.index(paddle)].rect.y))
@@ -278,9 +277,9 @@ def eval_genomes(genomes, config):
             else:
                 paddle.move_stop()
         #right paddle
-        for x, paddle in enumerate(paddles_r):
+        for x_c, paddle in enumerate(paddles_r):
             #given fitness for being alive
-            ge[x].fitness += 0.05
+            ge[x_c].fitness += 0.05
             paddle.move()
 
             outputs = nets[paddles_r.index(paddle)].activate((paddle.get_y(),
@@ -349,7 +348,8 @@ def run(config_file):
     winner = p.run(eval_genomes, 1000)
     #checkpoint.save_checkpoint()
 
-    #save_object(winner, f"winner{str(datetime.datetime.now().time()).split('.')[0]+'_'+str(datetime.datetime.now().date())}.pkl")
+    #save_object(winner, f"winner{str(datetime.datetime.now().time()).split('.')[0]+'_'+
+    # str(datetime.datetime.now().date())}.pkl")
 
     # show final stats
     print('\nBest genome:\n{!s}'.format(winner))
